@@ -28,3 +28,5 @@ yarn dev
 or
 
 npm run dev
+
+Happy coding
