@@ -1,4 +1,4 @@
-Chady-Project Setup
+Texture Optimization Setup
 
 yarn install
 
