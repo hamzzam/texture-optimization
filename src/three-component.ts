@@ -135,9 +135,7 @@ export class ThreeComponent extends TailwindElement(style) {
     }
   }
 
-  async modelLoader() {
-    console.log(2);
-
+  async loadModel() {
     // Lights
     let light = new THREE.AmbientLight(0x404040);
     this.scene.add(light);
@@ -152,7 +150,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
     let documentIo: Document;
 
-    documentIo = await io.read("../assets/scene.gltf");
+    documentIo = await io.read("../assets/m9_bayonet_default.glb");
 
     const glb = await io.writeBinary(documentIo);
 
@@ -164,12 +162,12 @@ export class ThreeComponent extends TailwindElement(style) {
 
     var currentTexture: { getImage: () => any };
 
-    // Draco Loader for draco decompression
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../assets/draco/");
 
-    // Loading model to add in scene
+    // Load model to add in scene
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
     loader.parse(glb.buffer, "", (gltf) => {
       let id: number;
       let model = gltf.scene;
@@ -186,10 +184,8 @@ export class ThreeComponent extends TailwindElement(style) {
       });
     });
 
-    loader.setDRACOLoader(dracoLoader);
 
     const resize = this.root?.getElementById("resizeButton");
-
     const compressImg = this.root?.getElementById("compressImg");
 
     // Append materials and their respective textures in required div
@@ -202,7 +198,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
         // Function call to get textures of each material present
         // Materials with no texture will be ignored and not returned here
-        const matTextures = this.getTextureFromMaterials(materials[i]);
+        const matTextures = this.getTexturesFromMaterials(materials[i]);
 
         if (materialButton && matTextures) {
           const tnode = this.root?.getElementById("textureButtons");
@@ -211,7 +207,7 @@ export class ThreeComponent extends TailwindElement(style) {
           materialButton.className =
             "px-8 py-4 text-sm m-4 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
 
-          // onClick functionality fot Materials
+          // onClick functionality for Materials
           materialButton.onclick = function (e) {
             let i = Number(e.target?.id);
             tnode.innerHTML = "";
@@ -271,7 +267,7 @@ export class ThreeComponent extends TailwindElement(style) {
     };
   }
 
-  getTextureFromMaterials(material: Material) {
+  getTexturesFromMaterials(material: Material) {
     const materialTextures = [];
 
     const normalTexture = material.getNormalTexture();
@@ -290,17 +286,14 @@ export class ThreeComponent extends TailwindElement(style) {
     }
     if (baseColorTetxture) {
       baseColorTetxture.setName("Base Color Texture");
-
       materialTextures.push(baseColorTetxture);
     }
     if (occlusionTexture) {
       occlusionTexture.setName("Occlusion Texture");
-
       materialTextures.push(occlusionTexture);
     }
     if (metallicRoughnessTexture) {
       metallicRoughnessTexture.setName("Metallic Roughness Texture");
-
       materialTextures.push(metallicRoughnessTexture);
     }
 
@@ -317,8 +310,6 @@ export class ThreeComponent extends TailwindElement(style) {
   // Function Start Here
   firstUpdated() {
     // Camera, Scene setup
-    console.log(1);
-
     this.camera.position.set(0, 0, 1);
     this.scene.background = new THREE.Color(0x9ca3af);
     this.renderer = new THREE.WebGLRenderer({
@@ -327,7 +318,7 @@ export class ThreeComponent extends TailwindElement(style) {
       alpha: true,
     });
 
-    this.modelLoader();
+    this.loadModel();
 
     // Initializing Orbit Controls for Model
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
