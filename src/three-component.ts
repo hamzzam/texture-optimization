@@ -37,12 +37,14 @@ export class ThreeComponent extends TailwindElement(style) {
   mArray: THREE.Material[];
 
   render() {
-    return html`<div class="absolute w-full h-full overflow-hidden">
+    return html`<div
+      class="absolute max-w-screen max-h-screen w-full h-full overflow-hidden"
+    >
       <div
         id="imageHolder"
         class="flex top-0 left-0 w-full h-1/2 flex-row items-center justify-center bg-gray-400"
       >
-        <div class="border mr-12 flex bg-gray-600 p-6 rounded-lg shadow-lg">
+        <div class="flex bg-gray-600 p-6 rounded-lg shadow-lg">
           <div class="relative" id="materialButtonHolder">
             <div class="flex flex-col items-center">
               <h5
@@ -82,36 +84,34 @@ export class ThreeComponent extends TailwindElement(style) {
           </div>
         </div>
 
-        <div
-          class="flex border flex-row w-max md:w-max p-5 items-center justify-center bg-gray-600 rounded-lg shadow-lg"
-        >
+        <div class="flex flex-row w-max md:w-max items-center justify-center">
           <div
             class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
           >
-            <div class="p-5 self-center flex flex-col items-center">
+            <div class="p-2 self-center flex flex-col items-center">
               <h5
                 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
               >
                 Original Texture
               </h5>
             </div>
-            <div class="w-96 h-96 bg-gray-500 rounded mx-auto my-auto">
+            <div class="w-96 h-96 bg-gray-500 mx-auto my-auto">
               <img id="textureImg" />
             </div>
           </div>
 
           <div
-            class="flex flex-col mx-14 w-min content-center justify-center bg-gray-400 rounded-lg shadow-lg"
+            class="flex flex-col w-min content-center justify-center bg-gray-600 shadow-lg"
           >
             <button
               id="compressButton"
-              class="px-8 py-4 text-lg m-4 font-mono text-gray-400  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white md:w-auto md:m-0"
+              class="px-8 py-4 text-lg m-4 font-mono text-gray-100  border-gray-200 hover:bg-gray-800 md:w-auto md:m-0"
             >
               Compress
             </button>
             <button
               id="resizeButton"
-              class="px-8 py-4 text-lg m-4 font-mono text-gray-900  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white md:w-auto md:m-0"
+              class="px-8 py-4 text-lg m-4 font-mono text-gray-100  hover:bg-gray-800 md:w-auto md:m-0"
             >
               Resize
             </button>
@@ -120,7 +120,7 @@ export class ThreeComponent extends TailwindElement(style) {
           <div
             class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
           >
-            <div class="p-5 self-center flex flex-col items-center">
+            <div class="p-2 self-center flex flex-col items-center">
               <h5
                 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
               >
