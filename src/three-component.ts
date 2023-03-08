@@ -38,53 +38,56 @@ export class ThreeComponent extends TailwindElement(style) {
 
   render() {
     return html`<div
-      class="absolute max-w-screen max-h-screen w-full h-full overflow-hidden"
+      class="relative flex-1"
     >
       <div
         id="imageHolder"
-        class="flex top-0 left-0 w-full h-1/2 flex-row items-center justify-center bg-gray-400"
+        class="flex static pt-10 z-10 top-0 left-0  items-center justify-center bg-gray-400"
       >
-        <div class="flex bg-gray-600 p-6 rounded-lg shadow-lg">
-          <div class="relative" id="materialButtonHolder">
-            <div class="flex flex-col items-center">
-              <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-              >
-                Materials
-              </h5>
-            </div>
-            <div
-              id="materialButton"
-              class="flex h-max overflow-auto flex-col"
-            ></div>
-          </div>
+       
 
-          <div
-            id="textureButtonHolder"
-            class="hidden md:block"
-            style="display:none"
-          >
-            <button
-              id="backButton"
-              class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
+        <div class="flex static border flex-row w-screen md:w-max items-center justify-evenly">
+
+        <div class="static flex bg-gray-600 p-6 rounded-lg shadow-lg">
+        <div class="" id="materialButtonHolder">
+          <div class="flex flex-col items-center">
+            <h5
+              class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
             >
-              Back
-            </button>
-            <div class="sticky self-center flex flex-col items-center">
-              <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-              >
-                Textures
-              </h5>
-            </div>
-            <div
-              id="textureButtons"
-              class="flex h-max overflow-auto flex-col"
-            ></div>
+              Materials
+            </h5>
           </div>
+          <div
+            id="materialButton"
+            class="flex h-max overflow-auto flex-col"
+          ></div>
         </div>
 
-        <div class="flex flex-row w-max md:w-max items-center justify-center">
+        <div
+          id="textureButtonHolder"
+          class="hidden md:block"
+          style="display:none"
+        >
+          <button
+            id="backButton"
+            class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
+          >
+            Back
+          </button>
+          <div class="sticky self-center flex flex-col items-center">
+            <h5
+              class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+            >
+              Textures
+            </h5>
+          </div>
+          <div
+            id="textureButtons"
+            class="flex h-max overflow-auto flex-col"
+          ></div>
+        </div>
+      </div>
+
           <div
             class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
           >
@@ -95,7 +98,7 @@ export class ThreeComponent extends TailwindElement(style) {
                 Original Texture
               </h5>
             </div>
-            <div class="w-96 h-96 bg-gray-500 mx-auto my-auto">
+            <div class="w-80 h-80 bg-gray-500 mx-auto my-auto">
               <img id="textureImg" />
             </div>
           </div>
@@ -127,30 +130,33 @@ export class ThreeComponent extends TailwindElement(style) {
                 Compressed Texture
               </h5>
             </div>
-            <div class="w-full h-64 bg-gray-500">
+            <div class="w-64 h-64 bg-gray-500">
               <img id="compressImg" class="w-full h-full object-contain" />
             </div>
           </div>
         </div>
       </div>
 
-      <div class="border relative w-screen h-screen">
-        <canvas class="fixed bottom-0 left-0 w-full h-1/2"></canvas>
+      <div class="">
+        <canvas class=""></canvas>
       </div>
     </div>`;
   }
 
   resizeCanvasToDisplaySize() {
-    const canvas = this.renderer.domElement;
+    
 
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
 
-    if (canvas.width !== width || canvas.height !== height) {
-      this.renderer.setSize(width, height, false);
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
-    }
+    // let width = getComputedStyle(this.canvas).getPropertyValue("width");
+    // width = width.substring(0, width.length - 2);
+    // let height = getComputedStyle(this.canvas).getPropertyValue("height");
+    // height = height.substring(0, height.length - 2);
+    
+
+
+    // if (canvas.width !== width || canvas.height !== height) {
+     
+    // }
   }
 
   async loadModel() {
@@ -377,7 +383,6 @@ export class ThreeComponent extends TailwindElement(style) {
 
   renderModel() {
     this.renderer!.render(this.scene, this.camera);
-    this.resizeCanvasToDisplaySize();
   }
 
   // Function Start Here
@@ -397,23 +402,33 @@ export class ThreeComponent extends TailwindElement(style) {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls!.update();
 
-    let width = getComputedStyle(this.canvas).getPropertyValue("width");
-    width = width.substring(0, width.length - 2);
-    let height = getComputedStyle(this.canvas).getPropertyValue("height");
-    height = height.substring(0, height.length - 2);
+    const canvas = this.renderer.domElement;
+
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+console.log(width, height);
+
+    
 
     // Renderer setup
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
-    this.renderer!.setSize(Number(width), Number(height));
+    this.renderer.setSize(width, height, false);
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    
+    // this.renderer!.setSize(Number(width), Number(height));
+    // this.resizeCanvasToDisplaySize();
+
     this.renderer.setAnimationLoop(() => this.renderModel());
 
     window.addEventListener(
       "resize",
       () => {
-        this.renderer!.setSize(Number(width), Number(height));
+        // this.renderer!.setSize(Number(width), Number(height));
       },
       true
     );
