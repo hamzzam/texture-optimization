@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import style from "./header.component.scss";
 import { TailwindElement } from "../shared/tailwind.element";
-import { Document, WebIO, Material } from "@gltf-transform/core";
+import { Document, WebIO, Material, Texture } from "@gltf-transform/core";
 import { textureResize } from "@gltf-transform/functions";
 import { Mesh } from "three";
 
@@ -26,100 +26,118 @@ export class ThreeComponent extends TailwindElement(style) {
   );
   renderer?: THREE.WebGLRenderer;
   controls?: OrbitControls;
-
+  documentIo: Document;
   meshArray = [];
   model?: THREE.Group;
+  clonedMaterials: Material[];
+  materials: Material[];
+
+  materialSelectedIndex: number;
+  textureSelectedIndex: number;
+  mArray: THREE.Material[];
 
   render() {
-    return html`<main>
+    return html`<div class="absolute w-full h-full overflow-hidden">
       <div
         id="imageHolder"
-        class="flex overflow-hidden py-16 flex-row w-screen items-center justify-evenly bg-gray-400"
+        class="flex top-0 left-0 w-full h-1/2 flex-row items-center justify-center bg-gray-400"
       >
-        <div>
-          <div class="sticky self-center flex flex-col items-center">
-            <h5
-              class="mb-2 text-2xl  font-mono w-fit tracking-tight text-gray-900  dark:text-white"
-            >
-              Materials
-            </h5>
+        <div class="border mr-12 flex bg-gray-600 p-6 rounded-lg shadow-lg">
+          <div class="relative" id="materialButtonHolder">
+            <div class="flex flex-col items-center">
+              <h5
+                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+              >
+                Materials
+              </h5>
+            </div>
+            <div
+              id="materialButton"
+              class="flex h-max overflow-auto flex-col"
+            ></div>
           </div>
-          <div
-            id="materialButton"
-            class=" flex  h-96 overflow-auto  flex-col border bg-gray-600 p-6 rounded-lg shadow-lg"
-          ></div>
-        </div>
 
-        <div>
-          <div class="sticky self-center flex flex-col items-center">
-            <h5
-              class="mb-2 text-2xl  font-mono w-fit tracking-tight text-gray-900  dark:text-white"
-            >
-              Textures
-            </h5>
-          </div>
           <div
-            id="textureButtons"
-            class=" flex  h-96 overflow-auto  flex-col border bg-gray-600 p-6 rounded-lg shadow-lg"
-          ></div>
+            id="textureButtonHolder"
+            class="hidden md:block"
+            style="display:none"
+          >
+            <button
+              id="backButton"
+              class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
+            >
+              Back
+            </button>
+            <div class="sticky self-center flex flex-col items-center">
+              <h5
+                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+              >
+                Textures
+              </h5>
+            </div>
+            <div
+              id="textureButtons"
+              class="flex h-max overflow-auto flex-col"
+            ></div>
+          </div>
         </div>
 
         <div
-          class="flex flex-row w-3/4 p-5 items-center justify-evenly bg-gray-600 rounded-lg shadow-lg"
+          class="flex border flex-row w-max md:w-max p-5 items-center justify-center bg-gray-600 rounded-lg shadow-lg"
         >
           <div
-            class="max-w-sm bg-white border-gray-200  shadow dark:bg-gray-800 dark:border-gray-700"
+            class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
           >
             <div class="p-5 self-center flex flex-col items-center">
               <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900  dark:text-white"
+                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
               >
                 Original Texture
               </h5>
             </div>
-            <a href="#">
-              <img id="textureImg" alt="textureImg" />
-            </a>
+            <div class="w-96 h-96 bg-gray-500 rounded mx-auto my-auto">
+              <img id="textureImg" />
+            </div>
           </div>
 
           <div
-            class="flex flex-col w-min content-center justify-center bg-gray-400 rounded-lg shadow-lg"
+            class="flex flex-col mx-14 w-min content-center justify-center bg-gray-400 rounded-lg shadow-lg"
           >
             <button
               id="compressButton"
-              class="px-8 py-4 text-lg m-4 font-mono  text-gray-400 border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
+              class="px-8 py-4 text-lg m-4 font-mono text-gray-400  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white md:w-auto md:m-0"
             >
               Compress
             </button>
             <button
               id="resizeButton"
-              class="px-8 py-4 text-lg m-4 font-mono  text-gray-900 border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700  dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white"
+              class="px-8 py-4 text-lg m-4 font-mono text-gray-900  border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:text-black dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white md:w-auto md:m-0"
             >
               Resize
             </button>
           </div>
 
           <div
-            class="max-w-sm  bg-white border-gray-200  shadow dark:bg-gray-800 dark:border-gray-700"
+            class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
           >
             <div class="p-5 self-center flex flex-col items-center">
               <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900  dark:text-white"
+                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
               >
                 Compressed Texture
               </h5>
             </div>
-            <a href="#">
-              <img id="compressImg" alt="compressImg" />
-            </a>
+            <div class="w-full h-64 bg-gray-500">
+              <img id="compressImg" class="w-full h-full object-contain" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="border bg-gray-400 py-4">
-        <canvas class="h-96 w-screen"></canvas>
+      <div class="border relative w-screen h-screen">
+        <canvas class="fixed bottom-0 left-0 w-full h-1/2"></canvas>
       </div>
-    </main>`;
+    </div>`;
   }
 
   resizeCanvasToDisplaySize() {
@@ -148,19 +166,14 @@ export class ThreeComponent extends TailwindElement(style) {
     // GLTF Transform Model Handling
     const io = new WebIO({ credentials: "include" });
 
-    let documentIo: Document;
+    this.documentIo = await io.read("../assets/m9_bayonet_default.glb");
 
-    documentIo = await io.read("../assets/m9_bayonet_default.glb");
+    const documentClone = await io.read("../assets/m9_bayonet_default.glb");
 
-    const glb = await io.writeBinary(documentIo);
+    const glb = await io.writeBinary(this.documentIo);
 
-    const materials = documentIo.getRoot().listMaterials();
-
-    const mArray = [];
-
-    var regexp: RegExp;
-
-    var currentTexture: { getImage: () => any };
+    this.materials = this.documentIo.getRoot().listMaterials();
+    this.clonedMaterials = documentClone.getRoot().listMaterials();
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../assets/draco/");
@@ -171,100 +184,157 @@ export class ThreeComponent extends TailwindElement(style) {
     loader.parse(glb.buffer, "", (gltf) => {
       let id: number;
       let model = gltf.scene;
-      model.position.set(0, -1, 0);
+      // model.position.set(0, -1, 0);
+
+      //only for this model
+      model.rotation.set(1, 0, 1);
       this.scene.add(model);
+      let matArray: THREE.Material[] = [];
 
       model.traverse(function (obj) {
         if (obj instanceof Mesh) {
           if (obj.material.uuid !== id) {
             id = obj.material.uuid;
-            mArray.push(obj.material);
+            matArray.push(obj.material);
           }
         }
       });
+
+      this.mArray = matArray;
     });
 
-
     const resize = this.root?.getElementById("resizeButton");
-    const compressImg = this.root?.getElementById("compressImg");
+
+    const backButton = this.root?.getElementById("backButton");
+
+    backButton.onclick = this.returnButtonOnClick.bind(this);
 
     // Append materials and their respective textures in required div
-    if (materials.length > 0) {
-      const img = this.root?.getElementById("textureImg");
-
-      for (let i = 0; i < materials.length; i += 1) {
+    if (this.materials.length > 0) {
+      for (let i = 0; i < this.materials.length; i += 1) {
         const node = this.root?.getElementById("materialButton");
         const materialButton = document.createElement("button");
 
+        const matTextures = this.getTexturesFromMaterials(
+          this.clonedMaterials[i]
+        );
+
         // Function call to get textures of each material present
         // Materials with no texture will be ignored and not returned here
-        const matTextures = this.getTexturesFromMaterials(materials[i]);
-
         if (materialButton && matTextures) {
-          const tnode = this.root?.getElementById("textureButtons");
-          materialButton.innerText = materials[i].getName().toUpperCase();
+          materialButton.innerText = this.materials[i].getName().toUpperCase();
           materialButton.id = i.toString();
           materialButton.className =
-            "px-8 py-4 text-sm m-4 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
-
+            "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
           // onClick functionality for Materials
-          materialButton.onclick = function (e) {
-            let i = Number(e.target?.id);
-            tnode.innerHTML = "";
-
-            const textures = matTextures;
-            for (let i = 0; i < mArray.length; i += 1) {
-              if (i === Number(e.target?.id)) {
-                mArray[i].color.set(0xff0000);
-              } else {
-                mArray[i].color.set(0xffffff);
-              }
-            }
-
-            // Appending available Texture into respective buttons onto div
-            for (let i = 0; i < textures.length; i += 1) {
-              const textureButton = document.createElement("button");
-              if (textureButton) {
-                textureButton.innerText = textures[i].getName();
-                textureButton.id = i.toString();
-                textureButton.className =
-                  "px-8 py-4 text-sm m-4 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
-
-                // onClick functionality fot Textures
-
-                textureButton.onclick = function (e) {
-                  let i = Number(e.target?.id);
-                  let content = textures[i].getImage();
-                  currentTexture = textures[i].clone();
-                  regexp = new RegExp(textures[i].getURI());
-
-                  img.src = URL.createObjectURL(
-                    new Blob([content.buffer], { type: "image/png" } /* (1) */)
-                  );
-                };
-                tnode?.appendChild(textureButton);
-              }
-            }
-          };
+          materialButton.onclick = this.materialButtonOnClick.bind(this);
         }
         node?.appendChild(materialButton);
       }
     }
 
     // resize texture or image
-    resize.onclick = async function () {
-      await documentIo.transform(
-        textureResize({
-          size: [256, 256],
-          pattern: regexp,
-        })
-      );
+    resize.onclick = this.resizeOnClick.bind(this);
+  }
 
-      let textureImg = currentTexture.getImage();
-      compressImg.src = URL.createObjectURL(
-        new Blob([textureImg.buffer], { type: "image/png" } /* (1) */)
-      );
-    };
+  returnButtonOnClick() {
+    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
+    let materialButtonHolder = this.root?.getElementById(
+      "materialButtonHolder"
+    );
+
+    materialButtonHolder.style.display = "block";
+    textureButtonHolder.style.display = "none";
+  }
+
+  materialButtonOnClick(e) {
+    const tnode = this.root?.getElementById("textureButtons");
+    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
+    let materialButtonHolder = this.root?.getElementById(
+      "materialButtonHolder"
+    );
+
+    let i = Number(e.target?.id);
+
+    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[i]);
+
+    this.materialSelectedIndex = Number(e.target?.id);
+    tnode.innerHTML = "";
+
+    materialButtonHolder.style.display = "none";
+    textureButtonHolder.style.display = "block";
+
+    // Highlight selected material
+    for (let i = 0; i < this.mArray.length; i += 1) {
+      if (i === Number(e.target?.id)) {
+        this.mArray[i].color.set(0xff0000);
+      } else {
+        this.mArray[i].color.set(0xffffff);
+      }
+    }
+
+    // Appending available Texture into respective buttons onto div
+    for (let i = 0; i < matTextures.length; i += 1) {
+      const textureButton = document.createElement("button");
+      if (textureButton) {
+        textureButton.innerText = matTextures[i].getName();
+        textureButton.id = i.toString();
+        // console.log(textureButton.id);
+
+        textureButton.className =
+          "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
+        // onClick functionality fot Textures
+        textureButton.onclick = this.textureButtonOnClick.bind(this);
+        tnode?.appendChild(textureButton);
+      }
+    }
+  }
+
+  textureButtonOnClick(e) {
+    const img = this.root?.getElementById("textureImg");
+    const matTextures = this.getTexturesFromMaterials(
+      this.clonedMaterials[this.materialSelectedIndex]
+    );
+
+    let i = Number(e.target?.id);
+    this.textureSelectedIndex = i;
+    let cloneTexture = matTextures[i];
+    let content = cloneTexture.getImage();
+
+    img.src = URL.createObjectURL(
+      new Blob([content.buffer], { type: "image/png" } /* (1) */)
+    );
+  }
+
+  async resizeOnClick(e) {
+    console.log(this.clonedMaterials);
+    const clonedMatTextures = this.getTexturesFromMaterials(
+      this.materials[this.materialSelectedIndex]
+    );
+
+    let currentTexture = clonedMatTextures[this.textureSelectedIndex];
+    var regexp: RegExp;
+
+    const compressImg = this.root?.getElementById("compressImg");
+
+    if (currentTexture.getURI()) {
+      regexp = new RegExp(currentTexture.getURI());
+    } else {
+      regexp = new RegExp(currentTexture.getName());
+    }
+
+    await this.documentIo.transform(
+      textureResize({
+        size: [256, 256],
+        pattern: regexp,
+      })
+    );
+
+    const imageData = currentTexture.getImage();
+    let image = URL.createObjectURL(
+      new Blob([imageData.buffer], { type: "image/png" } /* (1) */)
+    );
+    compressImg.src = image;
   }
 
   getTexturesFromMaterials(material: Material) {
@@ -297,8 +367,11 @@ export class ThreeComponent extends TailwindElement(style) {
       materialTextures.push(metallicRoughnessTexture);
     }
 
-    if (materialTextures.length > 0) {
-      return materialTextures;
+    const matTextures = [...new Set(materialTextures)];
+    console.log(matTextures);
+
+    if (matTextures.length > 0) {
+      return matTextures;
     }
   }
 
@@ -342,7 +415,7 @@ export class ThreeComponent extends TailwindElement(style) {
       () => {
         this.renderer!.setSize(Number(width), Number(height));
       },
-      false
+      true
     );
   }
 }
