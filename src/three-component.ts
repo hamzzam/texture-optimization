@@ -29,9 +29,9 @@ export class ThreeComponent extends TailwindElement(style) {
   clonedMaterials: Material[];
   materials: Material[];
   io = new WebIO({ credentials: "include" });
-  materialSelectedIndex: number;
-  textureSelectedIndex: number;
-  mArray: THREE.Material[];
+  materialSelectedIndex = -1;
+  textureSelectedIndex = -1;
+  inSceneMaterials: THREE.Material[];
 
   render() {
     return html`
@@ -141,9 +141,9 @@ export class ThreeComponent extends TailwindElement(style) {
 
     // GLTF Transform Model Handling
 
-    this.documentIo = await this.io.read("../assets/m9_bayonet_default.glb");
+    this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
 
-    const documentClone = await this.io.read("../assets/m9_bayonet_default.glb");
+    const documentClone = await this.io.read("../assets/steampunk_glasses.glb");
 
     const glb = await this.io.writeBinary(this.documentIo);
 
@@ -224,25 +224,18 @@ export class ThreeComponent extends TailwindElement(style) {
     let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
     let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
 
-    let i = Number(e.target?.id);
-
-    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[i]);
-
+    if (this.materialSelectedIndex !== -1) this.inSceneMaterials[this.materialSelectedIndex].color = new THREE.Color(this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor);
     this.materialSelectedIndex = Number(e.target?.id);
+    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.materialSelectedIndex]);
     tnode.innerHTML = "";
 
     materialButtonHolder.style.display = "none";
     textureButtonHolder.style.display = "block";
 
     // Highlight selected material
-    for (let i = 0; i < this.mArray.length; i += 1) {
-      if (i === Number(e.target?.id)) {
-        this.mArray[i].color.set(0xff0000);
-      } else {
-        this.mArray[i].color.set(0xffffff);
-      }
-    }
-
+    this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor = this.inSceneMaterials[this.materialSelectedIndex].color.getHex()
+    this.inSceneMaterials[this.materialSelectedIndex].color.set(0xff0000);
+   
     // Appending available Texture into respective buttons onto div
     for (let i = 0; i < matTextures.length; i += 1) {
       const textureButton = document.createElement("button");
@@ -280,7 +273,7 @@ export class ThreeComponent extends TailwindElement(style) {
         }
       });
 
-      this.mArray = matArray;
+      this.inSceneMaterials = matArray;
     });
   }
 
