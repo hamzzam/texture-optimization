@@ -31,6 +31,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
   // gltf-transform
   documentIo: Document;
+  documentClone: Document;
   materials: Material[];
   io = new WebIO({ credentials: "include" });
   selectedMaterialIndex = -1;
@@ -128,9 +129,9 @@ export class ThreeComponent extends TailwindElement(style) {
   async loadModel() {
     // GLTF Transform Model Handling
     this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
-    const documentClone = await this.io.read("../assets/steampunk_glasses.glb");
+    this.documentClone = await this.io.read("../assets/steampunk_glasses.glb");
 
-    this.materials = documentClone.getRoot().listMaterials();
+    this.materials = this.documentIo.getRoot().listMaterials();
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../assets/draco/");
@@ -253,11 +254,12 @@ export class ThreeComponent extends TailwindElement(style) {
 
   textureButtonOnClick(e) {
     const img = this.root?.getElementById("textureImg");
-    const matTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
+    const originalMaterials = this.documentClone.getRoot().listMaterials();
+    const currentMaterialTextures = this.getTexturesFromMaterials(originalMaterials[this.selectedMaterialIndex]);
 
     let i = Number(e.target?.id);
     this.selectedTextureIndex = i;
-    let cloneTexture = matTextures[i];
+    let cloneTexture = currentMaterialTextures[i];
     let content = cloneTexture.getImage();
 
     img.src = URL.createObjectURL(new Blob([content.buffer], { type: "image/png" } /* (1) */));
@@ -277,6 +279,7 @@ export class ThreeComponent extends TailwindElement(style) {
       regexp = new RegExp(currentTexture.getName());
     }
 
+    console.log(regexp)
     await this.documentIo.transform(
       textureResize({
         size: [32, 32],
@@ -316,6 +319,8 @@ export class ThreeComponent extends TailwindElement(style) {
       this.fitCameraToObject(this.camera, model, 3, this.controls);
     });
   }
+
+  // Reference: https://discourse.threejs.org/t/camera-zoom-to-fit-object/936/3
   fitCameraToObject( camera, object, offset, controls ) {
 
     offset = offset || 1.25;
