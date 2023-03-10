@@ -18,25 +18,25 @@ export class ThreeComponent extends TailwindElement(style) {
     return this.shadowRoot;
   }
 
+  // three.js
   raycaster = new THREE.Raycaster();
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
   renderer?: THREE.WebGLRenderer;
   controls?: OrbitControls;
-  
+
+  // material highlighting
+  highlightedMaterialIndex: number;
+  inSceneMaterials: THREE.Material[];
+
+  // gltf-transform
   documentIo: Document;
-  meshArray = [];
-  model?: THREE.Group;
-  clonedMaterials: Material[];
   materials: Material[];
   io = new WebIO({ credentials: "include" });
   selectedMaterialIndex = -1;
   selectedTextureIndex = -1;
 
-  // in scene vars
-  highlightedMaterialIndex: number;
-  inSceneMaterials: THREE.Material[];
-
+  // TODO: css-templating
   render() {
     return html`
       <div class="relative flex flex-col h-screen border-black">
@@ -107,7 +107,7 @@ export class ThreeComponent extends TailwindElement(style) {
                     </div>
                     <div class="w-64 h-64 bg-gray-500">
                       <img
-                        id="compressImg"
+                        id="compressedTextureImg"
                         class="w-full h-full object-contain" />
                     </div>
                   </div>
@@ -124,20 +124,18 @@ export class ThreeComponent extends TailwindElement(style) {
     `;
   }
 
+  // general function and gltf-transform related methods
   async loadModel() {
     // GLTF Transform Model Handling
     this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
     const documentClone = await this.io.read("../assets/steampunk_glasses.glb");
 
-    const glb = await this.io.writeBinary(this.documentIo);
-
-    this.materials = this.documentIo.getRoot().listMaterials();
-    this.clonedMaterials = documentClone.getRoot().listMaterials();
+    this.materials = documentClone.getRoot().listMaterials();
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../assets/draco/");
 
-    this.loadModelInScene(glb);
+    this.loadModelInScene(this.documentIo);
 
     const resize = this.root?.getElementById("resizeButton");
 
@@ -151,7 +149,7 @@ export class ThreeComponent extends TailwindElement(style) {
         const node = this.root?.getElementById("materialButton");
         const materialButton = document.createElement("button");
 
-        const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[i]);
+        const matTextures = this.getTexturesFromMaterials(this.materials[i]);
 
         // Function call to get textures of each material present
         // Materials with no texture will be ignored and not returned here
@@ -168,113 +166,6 @@ export class ThreeComponent extends TailwindElement(style) {
 
     // resize texture or image
     resize.onclick = this.resizeOnClick.bind(this);
-  }
-
-  returnButtonOnClick() {
-    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
-    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
-
-    materialButtonHolder.style.display = "block";
-    textureButtonHolder.style.display = "none";
-  }
-
-  materialButtonOnClick(e) {
-    const tnode = this.root?.getElementById("textureButtons");
-    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
-    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
-
-    if (this.highlightedMaterialIndex !== -1) this.inSceneMaterials[this.highlightedMaterialIndex].emissive = new THREE.Color(this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor);
-    this.selectedMaterialIndex = Number(e.target?.id);
-    this.highlightedMaterialIndex = this.selectedMaterialIndex;
-    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.selectedMaterialIndex]);
-    tnode.innerHTML = "";
-
-    materialButtonHolder.style.display = "none";
-    textureButtonHolder.style.display = "block";
-
-    // Highlight selected material
-    this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor = this.inSceneMaterials[this.highlightedMaterialIndex].emissive .getHex()
-    this.inSceneMaterials[this.highlightedMaterialIndex].emissive .set(0xff0000);
-   
-    // Appending available Texture into respective buttons onto div
-    for (let i = 0; i < matTextures.length; i += 1) {
-      const textureButton = document.createElement("button");
-      if (textureButton) {
-        textureButton.innerText = matTextures[i].getName();
-        textureButton.id = i.toString();
-        // console.log(textureButton.id);
-
-        textureButton.className = "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
-        // onClick functionality fot Textures
-        textureButton.onclick = this.textureButtonOnClick.bind(this);
-        tnode?.appendChild(textureButton);
-      }
-    }
-  }
-
-  loadModelInScene(glb: Uint8Array) {
-    const loader = new GLTFLoader();
-    loader.parse(glb.buffer, "", (gltf) => {
-      let id: number;
-      let model = gltf.scene;
-
-      this.scene.add(model);
-      let matArray: THREE.Material[] = [];
-
-      model.traverse(function (obj) {
-        if (obj instanceof Mesh) {
-          if (obj.material.uuid !== id) {
-            id = obj.material.uuid;
-            matArray.push(obj.material);
-          }
-        }
-      });
-
-      this.highlightedMaterialIndex = -1;
-      this.inSceneMaterials = matArray;
-      this.fitCameraToObject(this.camera, model, 3, this.controls);
-    });
-  }
-
-  textureButtonOnClick(e) {
-    const img = this.root?.getElementById("textureImg");
-    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.selectedMaterialIndex]);
-
-    let i = Number(e.target?.id);
-    this.selectedTextureIndex = i;
-    let cloneTexture = matTextures[i];
-    let content = cloneTexture.getImage();
-
-    img.src = URL.createObjectURL(new Blob([content.buffer], { type: "image/png" } /* (1) */));
-  }
-
-  async resizeOnClick(e) {
-    const clonedMatTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
-
-    let currentTexture = clonedMatTextures[this.selectedTextureIndex];
-    var regexp: RegExp;
-
-    const compressImg = this.root?.getElementById("compressImg");
-
-    if (currentTexture.getURI()) {
-      regexp = new RegExp(currentTexture.getURI());
-    } else {
-      regexp = new RegExp(currentTexture.getName());
-    }
-
-    await this.documentIo.transform(
-      textureResize({
-        size: [32, 32],
-        pattern: regexp,
-      })
-    );
-
-    const glb = await this.io.writeBinary(this.documentIo);
-    this.loadModelInScene(glb);
-
-    const imageData = currentTexture.getImage();
-    let image = URL.createObjectURL(new Blob([imageData.buffer], { type: "image/png" } /* (1) */));
-    compressImg.src = image;
   }
 
   getTexturesFromMaterials(material: Material) {
@@ -315,6 +206,116 @@ export class ThreeComponent extends TailwindElement(style) {
     }
   }
 
+  // button click callbacks
+  returnButtonOnClick() {
+    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
+    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
+
+    materialButtonHolder.style.display = "block";
+    textureButtonHolder.style.display = "none";
+  }
+
+  materialButtonOnClick(e) {
+    const tnode = this.root?.getElementById("textureButtons");
+    let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
+    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
+
+    // restore color of highlighted material
+    if (this.highlightedMaterialIndex !== -1) this.inSceneMaterials[this.highlightedMaterialIndex].emissive = new THREE.Color(this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor);
+    
+    this.selectedMaterialIndex = Number(e.target?.id);
+    this.highlightedMaterialIndex = this.selectedMaterialIndex;
+    const matTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
+    
+    tnode.innerHTML = "";
+    materialButtonHolder.style.display = "none";
+    textureButtonHolder.style.display = "block";
+
+    // Highlight selected material
+    this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor = this.inSceneMaterials[this.highlightedMaterialIndex].emissive .getHex()
+    this.inSceneMaterials[this.highlightedMaterialIndex].emissive .set(0xff0000);
+   
+    // Appending available Texture into respective buttons onto div
+    for (let i = 0; i < matTextures.length; i += 1) {
+      const textureButton = document.createElement("button");
+      if (textureButton) {
+        textureButton.innerText = matTextures[i].getName();
+        textureButton.id = i.toString();
+        // console.log(textureButton.id);
+
+        textureButton.className = "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
+        // onClick functionality fot Textures
+        textureButton.onclick = this.textureButtonOnClick.bind(this);
+        tnode?.appendChild(textureButton);
+      }
+    }
+  }
+
+  textureButtonOnClick(e) {
+    const img = this.root?.getElementById("textureImg");
+    const matTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
+
+    let i = Number(e.target?.id);
+    this.selectedTextureIndex = i;
+    let cloneTexture = matTextures[i];
+    let content = cloneTexture.getImage();
+
+    img.src = URL.createObjectURL(new Blob([content.buffer], { type: "image/png" } /* (1) */));
+  }
+
+  async resizeOnClick(e) {
+    const currentMaterialTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
+
+    let currentTexture = currentMaterialTextures[this.selectedTextureIndex];
+    let regexp: RegExp;
+
+    const compressedTextureImg = this.root?.getElementById("compressedTextureImg");
+
+    if (currentTexture.getURI()) {
+      regexp = new RegExp(currentTexture.getURI());
+    } else {
+      regexp = new RegExp(currentTexture.getName());
+    }
+
+    await this.documentIo.transform(
+      textureResize({
+        size: [32, 32],
+        pattern: regexp,
+      })
+    );
+
+    const imageData = currentTexture.getImage();
+    let image = URL.createObjectURL(new Blob([imageData.buffer], { type: "image/png" } /* (1) */));
+    compressedTextureImg.src = image;
+
+    this.loadModelInScene(this.documentIo);
+  }
+
+  // Three.js related methods
+  async loadModelInScene(documentIo: Document) {
+    const glb = await this.io.writeBinary(documentIo);
+    const loader = new GLTFLoader();
+    loader.parse(glb.buffer, "", (gltf) => {
+      let id: number;
+      let model = gltf.scene;
+
+      this.scene.add(model);
+      let matArray: THREE.Material[] = [];
+
+      model.traverse(function (obj) {
+        if (obj instanceof Mesh) {
+          if (obj.material.uuid !== id) {
+            id = obj.material.uuid;
+            matArray.push(obj.material);
+          }
+        }
+      });
+
+      this.highlightedMaterialIndex = -1;
+      this.inSceneMaterials = matArray;
+      this.fitCameraToObject(this.camera, model, 3, this.controls);
+    });
+  }
   fitCameraToObject( camera, object, offset, controls ) {
 
     offset = offset || 1.25;
@@ -362,7 +363,7 @@ export class ThreeComponent extends TailwindElement(style) {
     this.renderer!.render(this.scene, this.camera);
   }
 
-  // Function Start Here
+  // Entry point
   firstUpdated() {
     // Camera, Scene setup
     this.camera.position.set(0, 0, 1);
