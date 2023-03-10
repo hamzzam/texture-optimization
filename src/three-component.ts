@@ -111,8 +111,8 @@ export class ThreeComponent extends TailwindElement(style) {
               </div>
             </div>
 
-            <div class="w-1/2 flex   justify-center items-center">
-              <canvas class=""></canvas>
+            <div class="w-1/2 justify-center items-center">
+              <canvas class="w-full h-full"></canvas>
             </div>
           </div>
         </div>
