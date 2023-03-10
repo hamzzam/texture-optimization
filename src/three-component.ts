@@ -23,14 +23,18 @@ export class ThreeComponent extends TailwindElement(style) {
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
   renderer?: THREE.WebGLRenderer;
   controls?: OrbitControls;
+  
   documentIo: Document;
   meshArray = [];
   model?: THREE.Group;
   clonedMaterials: Material[];
   materials: Material[];
   io = new WebIO({ credentials: "include" });
-  materialSelectedIndex = -1;
-  textureSelectedIndex = -1;
+  selectedMaterialIndex = -1;
+  selectedTextureIndex = -1;
+
+  // in scene vars
+  highlightedMaterialIndex: number;
   inSceneMaterials: THREE.Material[];
 
   render() {
@@ -121,19 +125,8 @@ export class ThreeComponent extends TailwindElement(style) {
   }
 
   async loadModel() {
-    // Lights
-    let light = new THREE.AmbientLight(0x404040);
-    this.scene.add(light);
-
-    let pointLight = new THREE.PointLight(0xffffff, 2);
-    pointLight.position.set(1.5, 8, 0.5);
-    pointLight.intensity = 2;
-    this.scene.add(pointLight);
-
     // GLTF Transform Model Handling
-
     this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
-
     const documentClone = await this.io.read("../assets/steampunk_glasses.glb");
 
     const glb = await this.io.writeBinary(this.documentIo);
@@ -190,17 +183,18 @@ export class ThreeComponent extends TailwindElement(style) {
     let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
     let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
 
-    if (this.materialSelectedIndex !== -1) this.inSceneMaterials[this.materialSelectedIndex].emissive = new THREE.Color(this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor);
-    this.materialSelectedIndex = Number(e.target?.id);
-    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.materialSelectedIndex]);
+    if (this.highlightedMaterialIndex !== -1) this.inSceneMaterials[this.highlightedMaterialIndex].emissive = new THREE.Color(this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor);
+    this.selectedMaterialIndex = Number(e.target?.id);
+    this.highlightedMaterialIndex = this.selectedMaterialIndex;
+    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.selectedMaterialIndex]);
     tnode.innerHTML = "";
 
     materialButtonHolder.style.display = "none";
     textureButtonHolder.style.display = "block";
 
     // Highlight selected material
-    this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor = this.inSceneMaterials[this.materialSelectedIndex].emissive .getHex()
-    this.inSceneMaterials[this.materialSelectedIndex].emissive .set(0xff0000);
+    this.inSceneMaterials[this.highlightedMaterialIndex].userData.originalColor = this.inSceneMaterials[this.highlightedMaterialIndex].emissive .getHex()
+    this.inSceneMaterials[this.highlightedMaterialIndex].emissive .set(0xff0000);
    
     // Appending available Texture into respective buttons onto div
     for (let i = 0; i < matTextures.length; i += 1) {
@@ -236,6 +230,7 @@ export class ThreeComponent extends TailwindElement(style) {
         }
       });
 
+      this.highlightedMaterialIndex = -1;
       this.inSceneMaterials = matArray;
       this.fitCameraToObject(this.camera, model, 3, this.controls);
     });
@@ -243,10 +238,10 @@ export class ThreeComponent extends TailwindElement(style) {
 
   textureButtonOnClick(e) {
     const img = this.root?.getElementById("textureImg");
-    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.materialSelectedIndex]);
+    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.selectedMaterialIndex]);
 
     let i = Number(e.target?.id);
-    this.textureSelectedIndex = i;
+    this.selectedTextureIndex = i;
     let cloneTexture = matTextures[i];
     let content = cloneTexture.getImage();
 
@@ -254,9 +249,9 @@ export class ThreeComponent extends TailwindElement(style) {
   }
 
   async resizeOnClick(e) {
-    const clonedMatTextures = this.getTexturesFromMaterials(this.materials[this.materialSelectedIndex]);
+    const clonedMatTextures = this.getTexturesFromMaterials(this.materials[this.selectedMaterialIndex]);
 
-    let currentTexture = clonedMatTextures[this.textureSelectedIndex];
+    let currentTexture = clonedMatTextures[this.selectedTextureIndex];
     var regexp: RegExp;
 
     const compressImg = this.root?.getElementById("compressImg");
@@ -371,9 +366,16 @@ export class ThreeComponent extends TailwindElement(style) {
   firstUpdated() {
     // Camera, Scene setup
     this.camera.position.set(0, 0, 1);
-    // this.scene.background = new THREE.Color(0x9ca3af);
-    const light = new THREE.AmbientLight( 0x404040 ); // soft white light
-    this.scene.add( light );
+
+    // Lights
+    let light = new THREE.AmbientLight(0x404040);
+    this.scene.add(light);
+
+    let pointLight = new THREE.PointLight(0xffffff, 2);
+    pointLight.position.set(1.5, 8, 0.5);
+    pointLight.intensity = 2;
+    this.scene.add(pointLight);
+
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: this.canvas,
@@ -390,7 +392,6 @@ export class ThreeComponent extends TailwindElement(style) {
 
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
-
     console.log(width, height);
 
     // Renderer setup
