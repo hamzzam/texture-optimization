@@ -20,10 +20,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
   raycaster = new THREE.Raycaster();
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(
-    70,
-    window.innerWidth / window.innerHeight
-  );
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
   renderer?: THREE.WebGLRenderer;
   controls?: OrbitControls;
   documentIo: Document;
@@ -37,111 +34,90 @@ export class ThreeComponent extends TailwindElement(style) {
   mArray: THREE.Material[];
 
   render() {
-    return html`<div class="relative flex flex-col h-screen border-black">
-      <div
-        id="imageHolder"
-        class="flex static z-10 top-0 left-0 items-center justify-center bg-gray-400"
-      >
-        <div
-          class="flex static border-r-2 flex-col w-screen h-screen md:w-screen items-center justify-center"
-        >
-          <div class="static mb-4 flex bg-gray-600 p-6 rounded-lg shadow-lg">
-            <div class="" id="materialButtonHolder">
-              <div class="flex flex-col items-center">
-                <h5
-                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-                >
-                  Materials
-                </h5>
-              </div>
-              <div
-                id="materialButton"
-                class="flex h-max overflow-auto flex-col"
-              ></div>
-            </div>
-
+    return html`
+      <div class="relative flex flex-col h-screen border-black">
+        <div class="flex static z-10 top-0 left-0 items-center justify-center bg-gray-400">
+          <!-- <div class="relative flex flex-col h-screen border-black"> -->
+          <div class="flex w-full">
             <div
-              id="textureButtonHolder"
-              class="hidden md:block"
-              style="display:none"
-            >
-              <button
-                id="backButton"
-                class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
-              >
-                Back
-              </button>
-              <div class="sticky self-center flex flex-col items-center">
-                <h5
-                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-                >
-                  Textures
-                </h5>
-              </div>
-              <div
-                id="textureButtons"
-                class="flex h-max overflow-auto flex-col"
-              ></div>
-            </div>
-          </div>
+              id="imageHolder"
+              class="flex static z-10 w-1/2 top-0 left-0 items-center justify-center bg-gray-400">
+              <div class="flex static border-r-2 flex-col w-screen h-screen md:w-screen items-center justify-center">
+                <div class="static mb-4 flex bg-gray-600 p-6 rounded-lg shadow-lg">
+                  <div
+                    class=""
+                    id="materialButtonHolder">
+                    <div class="flex flex-col items-center">
+                      <h5 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white">Materials</h5>
+                    </div>
+                    <div
+                      id="materialButton"
+                      class="flex h-max overflow-auto flex-col"></div>
+                  </div>
 
-          <div
-            class="flex flex-row w-full md:w-full items-center justify-evenly"
-          >
-            <div
-              class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
-            >
-              <div class="p-2 self-center flex flex-col items-center">
-                <h5
-                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-                >
-                  Original Texture
-                </h5>
-              </div>
-              <div class="w-80 h-80 bg-gray-500 mx-auto my-auto">
-                <img id="textureImg" />
-              </div>
-            </div>
+                  <div
+                    id="textureButtonHolder"
+                    class="hidden md:block"
+                    style="display:none">
+                    <button
+                      id="backButton"
+                      class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20">
+                      Back
+                    </button>
+                    <div class="sticky self-center flex flex-col items-center">
+                      <h5 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white">Textures</h5>
+                    </div>
+                    <div
+                      id="textureButtons"
+                      class="flex h-max overflow-auto flex-col"></div>
+                  </div>
+                </div>
 
-            <div
-              class="flex flex-col w-min content-center justify-center bg-gray-600 shadow-lg"
-            >
-              <!-- <button
+                <div class="flex flex-row w-full md:w-full items-center justify-evenly">
+                  <div class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700">
+                    <div class="p-2 self-center flex flex-col items-center">
+                      <h5 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white">Original Texture</h5>
+                    </div>
+                    <div class="w-80 h-80 bg-gray-500 mx-auto my-auto">
+                      <img id="textureImg" />
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col w-min content-center justify-center bg-gray-600 shadow-lg">
+                    <!-- <button
                 id="compressButton"
                 class="px-8 py-4 text-lg m-4 font-mono text-gray-100  border-gray-200 hover:bg-gray-800 md:w-auto md:m-0"
               >
                 Compress
               </button> -->
-              <button
-                id="resizeButton"
-                class="px-2 py-4 text-sm m-4 font-mono text-gray-100  hover:bg-gray-800 md:w-auto md:m-0"
-              >
-                Resize
-              </button>
+                    <button
+                      id="resizeButton"
+                      class="px-2 py-4 text-sm m-4 font-mono text-gray-100  hover:bg-gray-800 md:w-auto md:m-0">
+                      Resize
+                    </button>
+                  </div>
+
+                  <div class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700">
+                    <div class="p-2 self-center flex flex-col items-center">
+                      <h5 class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white">Compressed Texture</h5>
+                    </div>
+                    <div class="w-64 h-64 bg-gray-500">
+                      <img
+                        id="compressImg"
+                        class="w-full h-full object-contain" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div
-              class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
-            >
-              <div class="p-2 self-center flex flex-col items-center">
-                <h5
-                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-                >
-                  Compressed Texture
-                </h5>
-              </div>
-              <div class="w-64 h-64 bg-gray-500">
-                <img id="compressImg" class="w-full h-full object-contain" />
-              </div>
+            <div class="w-1/2 flex   justify-center items-center">
+              <canvas class=""></canvas>
             </div>
           </div>
         </div>
-
-        <div class="">
-          <canvas class=""></canvas>
-        </div>
       </div>
-    </div>`;
+    `;
   }
 
   resizeCanvasToDisplaySize() {
@@ -167,9 +143,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
     this.documentIo = await this.io.read("../assets/m9_bayonet_default.glb");
 
-    const documentClone = await this.io.read(
-      "../assets/m9_bayonet_default.glb"
-    );
+    const documentClone = await this.io.read("../assets/m9_bayonet_default.glb");
 
     const glb = await this.io.writeBinary(this.documentIo);
 
@@ -218,17 +192,14 @@ export class ThreeComponent extends TailwindElement(style) {
         const node = this.root?.getElementById("materialButton");
         const materialButton = document.createElement("button");
 
-        const matTextures = this.getTexturesFromMaterials(
-          this.clonedMaterials[i]
-        );
+        const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[i]);
 
         // Function call to get textures of each material present
         // Materials with no texture will be ignored and not returned here
         if (materialButton && matTextures) {
           materialButton.innerText = this.materials[i].getName().toUpperCase();
           materialButton.id = i.toString();
-          materialButton.className =
-            "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
+          materialButton.className = "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
           // onClick functionality for Materials
           materialButton.onclick = this.materialButtonOnClick.bind(this);
         }
@@ -242,9 +213,7 @@ export class ThreeComponent extends TailwindElement(style) {
 
   returnButtonOnClick() {
     let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
-    let materialButtonHolder = this.root?.getElementById(
-      "materialButtonHolder"
-    );
+    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
 
     materialButtonHolder.style.display = "block";
     textureButtonHolder.style.display = "none";
@@ -253,9 +222,7 @@ export class ThreeComponent extends TailwindElement(style) {
   materialButtonOnClick(e) {
     const tnode = this.root?.getElementById("textureButtons");
     let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
-    let materialButtonHolder = this.root?.getElementById(
-      "materialButtonHolder"
-    );
+    let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
 
     let i = Number(e.target?.id);
 
@@ -284,8 +251,7 @@ export class ThreeComponent extends TailwindElement(style) {
         textureButton.id = i.toString();
         // console.log(textureButton.id);
 
-        textureButton.className =
-          "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
+        textureButton.className = "px-4 py-2 text-xs m-2 font-mono text-gray-900  border-gray-200 hover:bg-gray-500 dark:bg-gray-700 dark:border-gray-400 dark:text-white dark:hover:text-black dark:hover:bg-gray-400 ";
         // onClick functionality fot Textures
         textureButton.onclick = this.textureButtonOnClick.bind(this);
         tnode?.appendChild(textureButton);
@@ -320,24 +286,18 @@ export class ThreeComponent extends TailwindElement(style) {
 
   textureButtonOnClick(e) {
     const img = this.root?.getElementById("textureImg");
-    const matTextures = this.getTexturesFromMaterials(
-      this.clonedMaterials[this.materialSelectedIndex]
-    );
+    const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.materialSelectedIndex]);
 
     let i = Number(e.target?.id);
     this.textureSelectedIndex = i;
     let cloneTexture = matTextures[i];
     let content = cloneTexture.getImage();
 
-    img.src = URL.createObjectURL(
-      new Blob([content.buffer], { type: "image/png" } /* (1) */)
-    );
+    img.src = URL.createObjectURL(new Blob([content.buffer], { type: "image/png" } /* (1) */));
   }
 
   async resizeOnClick(e) {
-    const clonedMatTextures = this.getTexturesFromMaterials(
-      this.materials[this.materialSelectedIndex]
-    );
+    const clonedMatTextures = this.getTexturesFromMaterials(this.materials[this.materialSelectedIndex]);
 
     let currentTexture = clonedMatTextures[this.textureSelectedIndex];
     var regexp: RegExp;
@@ -361,9 +321,7 @@ export class ThreeComponent extends TailwindElement(style) {
     this.loadModelInScene(glb);
 
     const imageData = currentTexture.getImage();
-    let image = URL.createObjectURL(
-      new Blob([imageData.buffer], { type: "image/png" } /* (1) */)
-    );
+    let image = URL.createObjectURL(new Blob([imageData.buffer], { type: "image/png" } /* (1) */));
     compressImg.src = image;
   }
 
