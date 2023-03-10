@@ -120,15 +120,6 @@ export class ThreeComponent extends TailwindElement(style) {
     `;
   }
 
-  resizeCanvasToDisplaySize() {
-    // let width = getComputedStyle(this.canvas).getPropertyValue("width");
-    // width = width.substring(0, width.length - 2);
-    // let height = getComputedStyle(this.canvas).getPropertyValue("height");
-    // height = height.substring(0, height.length - 2);
-    // if (canvas.width !== width || canvas.height !== height) {
-    // }
-  }
-
   async loadModel() {
     // Lights
     let light = new THREE.AmbientLight(0x404040);
@@ -154,31 +145,6 @@ export class ThreeComponent extends TailwindElement(style) {
     dracoLoader.setDecoderPath("../assets/draco/");
 
     this.loadModelInScene(glb);
-
-    // Load model to add in scene
-    // const loader = new GLTFLoader();
-    // loader.setDRACOLoader(dracoLoader);
-    // loader.parse(glb.buffer, "", (gltf) => {
-    //   let id: number;
-    //   let model = gltf.scene;
-    //   // model.position.set(0, -1, 0);
-
-    //   //only for this model
-    //   model.rotation.set(1, 0, 1);
-    //   this.scene.add(model);
-    //   let matArray: THREE.Material[] = [];
-
-    //   model.traverse(function (obj) {
-    //     if (obj instanceof Mesh) {
-    //       if (obj.material.uuid !== id) {
-    //         id = obj.material.uuid;
-    //         matArray.push(obj.material);
-    //       }
-    //     }
-    //   });
-
-    //   this.mArray = matArray;
-    // });
 
     const resize = this.root?.getElementById("resizeButton");
 
@@ -224,7 +190,7 @@ export class ThreeComponent extends TailwindElement(style) {
     let textureButtonHolder = this.root?.getElementById("textureButtonHolder");
     let materialButtonHolder = this.root?.getElementById("materialButtonHolder");
 
-    if (this.materialSelectedIndex !== -1) this.inSceneMaterials[this.materialSelectedIndex].color = new THREE.Color(this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor);
+    if (this.materialSelectedIndex !== -1) this.inSceneMaterials[this.materialSelectedIndex].emissive = new THREE.Color(this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor);
     this.materialSelectedIndex = Number(e.target?.id);
     const matTextures = this.getTexturesFromMaterials(this.clonedMaterials[this.materialSelectedIndex]);
     tnode.innerHTML = "";
@@ -233,8 +199,8 @@ export class ThreeComponent extends TailwindElement(style) {
     textureButtonHolder.style.display = "block";
 
     // Highlight selected material
-    this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor = this.inSceneMaterials[this.materialSelectedIndex].color.getHex()
-    this.inSceneMaterials[this.materialSelectedIndex].color.set(0xff0000);
+    this.inSceneMaterials[this.materialSelectedIndex].userData.originalColor = this.inSceneMaterials[this.materialSelectedIndex].emissive .getHex()
+    this.inSceneMaterials[this.materialSelectedIndex].emissive .set(0xff0000);
    
     // Appending available Texture into respective buttons onto div
     for (let i = 0; i < matTextures.length; i += 1) {
@@ -257,10 +223,7 @@ export class ThreeComponent extends TailwindElement(style) {
     loader.parse(glb.buffer, "", (gltf) => {
       let id: number;
       let model = gltf.scene;
-      // model.position.set(0, -1, 0);
 
-      //only for this model
-      model.rotation.set(1, 0, 1);
       this.scene.add(model);
       let matArray: THREE.Material[] = [];
 
@@ -274,6 +237,7 @@ export class ThreeComponent extends TailwindElement(style) {
       });
 
       this.inSceneMaterials = matArray;
+      this.fitCameraToObject(this.camera, model, 3, this.controls);
     });
   }
 
@@ -356,7 +320,50 @@ export class ThreeComponent extends TailwindElement(style) {
     }
   }
 
-  renderModel() {
+  fitCameraToObject( camera, object, offset, controls ) {
+
+    offset = offset || 1.25;
+
+    const boundingBox = new THREE.Box3();
+
+    // get bounding box of object - this will be used to setup controls and camera
+    boundingBox.setFromObject( object );
+
+    const center = boundingBox.getCenter(new THREE.Vector3());
+
+    const size = boundingBox.getSize(new THREE.Vector3());
+
+    // get the max side of the bounding box (fits to width OR height as needed )
+    const maxDim = Math.max( size.x, size.y, size.z );
+    const fov = camera.fov * ( Math.PI / 180 );
+    let cameraZ = Math.abs( maxDim / 4 * Math.tan( fov * 2 ) );
+
+    cameraZ *= offset; // zoom out a little so that objects don't fill the screen
+
+    camera.position.z = cameraZ;
+
+    const minZ = boundingBox.min.z;
+    const cameraToFarEdge = ( minZ < 0 ) ? -minZ + cameraZ : cameraZ - minZ;
+
+    camera.far = cameraToFarEdge * 3;
+    camera.updateProjectionMatrix();
+
+    if ( controls ) {
+
+      // set camera to rotate around center of loaded object
+      controls.target = center;
+
+      // prevent camera from zooming out far enough to create far plane cutoff
+      controls.maxDistance = cameraToFarEdge * 2;
+
+      controls.saveState();
+
+    } else {
+        camera.lookAt( center )
+   }
+  }
+
+  webglRender() {
     this.renderer!.render(this.scene, this.camera);
   }
 
@@ -364,7 +371,9 @@ export class ThreeComponent extends TailwindElement(style) {
   firstUpdated() {
     // Camera, Scene setup
     this.camera.position.set(0, 0, 1);
-    this.scene.background = new THREE.Color(0x9ca3af);
+    // this.scene.background = new THREE.Color(0x9ca3af);
+    const light = new THREE.AmbientLight( 0x404040 ); // soft white light
+    this.scene.add( light );
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: this.canvas,
@@ -396,7 +405,7 @@ export class ThreeComponent extends TailwindElement(style) {
     // this.renderer!.setSize(Number(width), Number(height));
     // this.resizeCanvasToDisplaySize();
 
-    this.renderer.setAnimationLoop(() => this.renderModel());
+    this.renderer.setAnimationLoop(() => this.webglRender());
 
     window.addEventListener(
       "resize",
