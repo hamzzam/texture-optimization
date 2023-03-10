@@ -31,131 +31,125 @@ export class ThreeComponent extends TailwindElement(style) {
   model?: THREE.Group;
   clonedMaterials: Material[];
   materials: Material[];
-
+  io = new WebIO({ credentials: "include" });
   materialSelectedIndex: number;
   textureSelectedIndex: number;
   mArray: THREE.Material[];
 
   render() {
-    return html`<div
-      class="relative flex-1"
-    >
+    return html`<div class="relative flex flex-col h-screen border-black">
       <div
         id="imageHolder"
-        class="flex static pt-10 z-10 top-0 left-0  items-center justify-center bg-gray-400"
+        class="flex static z-10 top-0 left-0 items-center justify-center bg-gray-400"
       >
-       
-
-        <div class="flex static border flex-row w-screen md:w-max items-center justify-evenly">
-
-        <div class="static flex bg-gray-600 p-6 rounded-lg shadow-lg">
-        <div class="" id="materialButtonHolder">
-          <div class="flex flex-col items-center">
-            <h5
-              class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-            >
-              Materials
-            </h5>
-          </div>
-          <div
-            id="materialButton"
-            class="flex h-max overflow-auto flex-col"
-          ></div>
-        </div>
-
         <div
-          id="textureButtonHolder"
-          class="hidden md:block"
-          style="display:none"
+          class="flex static border-r-2 flex-col w-screen h-screen md:w-screen items-center justify-center"
         >
-          <button
-            id="backButton"
-            class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
-          >
-            Back
-          </button>
-          <div class="sticky self-center flex flex-col items-center">
-            <h5
-              class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
-            >
-              Textures
-            </h5>
-          </div>
-          <div
-            id="textureButtons"
-            class="flex h-max overflow-auto flex-col"
-          ></div>
-        </div>
-      </div>
+          <div class="static mb-4 flex bg-gray-600 p-6 rounded-lg shadow-lg">
+            <div class="" id="materialButtonHolder">
+              <div class="flex flex-col items-center">
+                <h5
+                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+                >
+                  Materials
+                </h5>
+              </div>
+              <div
+                id="materialButton"
+                class="flex h-max overflow-auto flex-col"
+              ></div>
+            </div>
 
-          <div
-            class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
-          >
-            <div class="p-2 self-center flex flex-col items-center">
-              <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+            <div
+              id="textureButtonHolder"
+              class="hidden md:block"
+              style="display:none"
+            >
+              <button
+                id="backButton"
+                class="bg-slate-700 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded mb-20"
               >
-                Original Texture
-              </h5>
-            </div>
-            <div class="w-80 h-80 bg-gray-500 mx-auto my-auto">
-              <img id="textureImg" />
+                Back
+              </button>
+              <div class="sticky self-center flex flex-col items-center">
+                <h5
+                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+                >
+                  Textures
+                </h5>
+              </div>
+              <div
+                id="textureButtons"
+                class="flex h-max overflow-auto flex-col"
+              ></div>
             </div>
           </div>
 
           <div
-            class="flex flex-col w-min content-center justify-center bg-gray-600 shadow-lg"
+            class="flex flex-row w-full md:w-full items-center justify-evenly"
           >
-            <button
-              id="compressButton"
-              class="px-8 py-4 text-lg m-4 font-mono text-gray-100  border-gray-200 hover:bg-gray-800 md:w-auto md:m-0"
+            <div
+              class="max-w-sm  bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
             >
-              Compress
-            </button>
-            <button
-              id="resizeButton"
-              class="px-8 py-4 text-lg m-4 font-mono text-gray-100  hover:bg-gray-800 md:w-auto md:m-0"
-            >
-              Resize
-            </button>
-          </div>
+              <div class="p-2 self-center flex flex-col items-center">
+                <h5
+                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+                >
+                  Original Texture
+                </h5>
+              </div>
+              <div class="w-80 h-80 bg-gray-500 mx-auto my-auto">
+                <img id="textureImg" />
+              </div>
+            </div>
 
-          <div
-            class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
-          >
-            <div class="p-2 self-center flex flex-col items-center">
-              <h5
-                class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+            <div
+              class="flex flex-col w-min content-center justify-center bg-gray-600 shadow-lg"
+            >
+              <!-- <button
+                id="compressButton"
+                class="px-8 py-4 text-lg m-4 font-mono text-gray-100  border-gray-200 hover:bg-gray-800 md:w-auto md:m-0"
               >
-                Compressed Texture
-              </h5>
+                Compress
+              </button> -->
+              <button
+                id="resizeButton"
+                class="px-2 py-4 text-sm m-4 font-mono text-gray-100  hover:bg-gray-800 md:w-auto md:m-0"
+              >
+                Resize
+              </button>
             </div>
-            <div class="w-64 h-64 bg-gray-500">
-              <img id="compressImg" class="w-full h-full object-contain" />
+
+            <div
+              class="max-w-sm bg-white border-gray-200 shadow dark:bg-gray-800 dark:border-gray-700"
+            >
+              <div class="p-2 self-center flex flex-col items-center">
+                <h5
+                  class="mb-2 text-2xl font-mono w-fit tracking-tight text-gray-900 dark:text-white"
+                >
+                  Compressed Texture
+                </h5>
+              </div>
+              <div class="w-64 h-64 bg-gray-500">
+                <img id="compressImg" class="w-full h-full object-contain" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="">
-        <canvas class=""></canvas>
+        <div class="">
+          <canvas class=""></canvas>
+        </div>
       </div>
     </div>`;
   }
 
   resizeCanvasToDisplaySize() {
-    
-
-
     // let width = getComputedStyle(this.canvas).getPropertyValue("width");
     // width = width.substring(0, width.length - 2);
     // let height = getComputedStyle(this.canvas).getPropertyValue("height");
     // height = height.substring(0, height.length - 2);
-    
-
-
     // if (canvas.width !== width || canvas.height !== height) {
-     
     // }
   }
 
@@ -170,13 +164,14 @@ export class ThreeComponent extends TailwindElement(style) {
     this.scene.add(pointLight);
 
     // GLTF Transform Model Handling
-    const io = new WebIO({ credentials: "include" });
 
-    this.documentIo = await io.read("../assets/m9_bayonet_default.glb");
+    this.documentIo = await this.io.read("../assets/m9_bayonet_default.glb");
 
-    const documentClone = await io.read("../assets/m9_bayonet_default.glb");
+    const documentClone = await this.io.read(
+      "../assets/m9_bayonet_default.glb"
+    );
 
-    const glb = await io.writeBinary(this.documentIo);
+    const glb = await this.io.writeBinary(this.documentIo);
 
     this.materials = this.documentIo.getRoot().listMaterials();
     this.clonedMaterials = documentClone.getRoot().listMaterials();
@@ -184,30 +179,32 @@ export class ThreeComponent extends TailwindElement(style) {
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("../assets/draco/");
 
+    this.loadModelInScene(glb);
+
     // Load model to add in scene
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-    loader.parse(glb.buffer, "", (gltf) => {
-      let id: number;
-      let model = gltf.scene;
-      // model.position.set(0, -1, 0);
+    // const loader = new GLTFLoader();
+    // loader.setDRACOLoader(dracoLoader);
+    // loader.parse(glb.buffer, "", (gltf) => {
+    //   let id: number;
+    //   let model = gltf.scene;
+    //   // model.position.set(0, -1, 0);
 
-      //only for this model
-      model.rotation.set(1, 0, 1);
-      this.scene.add(model);
-      let matArray: THREE.Material[] = [];
+    //   //only for this model
+    //   model.rotation.set(1, 0, 1);
+    //   this.scene.add(model);
+    //   let matArray: THREE.Material[] = [];
 
-      model.traverse(function (obj) {
-        if (obj instanceof Mesh) {
-          if (obj.material.uuid !== id) {
-            id = obj.material.uuid;
-            matArray.push(obj.material);
-          }
-        }
-      });
+    //   model.traverse(function (obj) {
+    //     if (obj instanceof Mesh) {
+    //       if (obj.material.uuid !== id) {
+    //         id = obj.material.uuid;
+    //         matArray.push(obj.material);
+    //       }
+    //     }
+    //   });
 
-      this.mArray = matArray;
-    });
+    //   this.mArray = matArray;
+    // });
 
     const resize = this.root?.getElementById("resizeButton");
 
@@ -296,6 +293,31 @@ export class ThreeComponent extends TailwindElement(style) {
     }
   }
 
+  loadModelInScene(glb: Uint8Array) {
+    const loader = new GLTFLoader();
+    loader.parse(glb.buffer, "", (gltf) => {
+      let id: number;
+      let model = gltf.scene;
+      // model.position.set(0, -1, 0);
+
+      //only for this model
+      model.rotation.set(1, 0, 1);
+      this.scene.add(model);
+      let matArray: THREE.Material[] = [];
+
+      model.traverse(function (obj) {
+        if (obj instanceof Mesh) {
+          if (obj.material.uuid !== id) {
+            id = obj.material.uuid;
+            matArray.push(obj.material);
+          }
+        }
+      });
+
+      this.mArray = matArray;
+    });
+  }
+
   textureButtonOnClick(e) {
     const img = this.root?.getElementById("textureImg");
     const matTextures = this.getTexturesFromMaterials(
@@ -313,7 +335,6 @@ export class ThreeComponent extends TailwindElement(style) {
   }
 
   async resizeOnClick(e) {
-    console.log(this.clonedMaterials);
     const clonedMatTextures = this.getTexturesFromMaterials(
       this.materials[this.materialSelectedIndex]
     );
@@ -331,10 +352,13 @@ export class ThreeComponent extends TailwindElement(style) {
 
     await this.documentIo.transform(
       textureResize({
-        size: [256, 256],
+        size: [32, 32],
         pattern: regexp,
       })
     );
+
+    const glb = await this.io.writeBinary(this.documentIo);
+    this.loadModelInScene(glb);
 
     const imageData = currentTexture.getImage();
     let image = URL.createObjectURL(
@@ -407,9 +431,7 @@ export class ThreeComponent extends TailwindElement(style) {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-console.log(width, height);
-
-    
+    console.log(width, height);
 
     // Renderer setup
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -419,7 +441,7 @@ console.log(width, height);
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    
+
     // this.renderer!.setSize(Number(width), Number(height));
     // this.resizeCanvasToDisplaySize();
 
