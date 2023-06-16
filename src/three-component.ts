@@ -24,17 +24,10 @@ export class ThreeComponent extends TailwindElement(style) {
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight);
   renderer?: THREE.WebGLRenderer;
   controls?: OrbitControls;
-
-  // material highlighting
-  highlightedMaterialIndex: number;
-  inSceneMaterials: THREE.Material[];
-
+  
   // gltf-transform
+  io: WebIO;
   documentIo: Document;
-  documentClone: Document;
-  materials: Material[];
-  selectedMaterialIndex = -1;
-  selectedTextureIndex = -1;
 
   dracoModules = {
     decoder: null,
@@ -56,26 +49,38 @@ export class ThreeComponent extends TailwindElement(style) {
 
   // general function and gltf-transform related methods
   async loadModel() {
-    const io = new WebIO()
+    this.io = new WebIO()
     .registerExtensions([KHRDracoMeshCompression])
     .registerDependencies({
-        'draco3d.decoder': this.dracoModules.decoder, // Optional.
-        'draco3d.encoder': this.dracoModules.encoder, // Optional.
+        'draco3d.decoder': this.dracoModules.decoder,
+        'draco3d.encoder': this.dracoModules.encoder,
     });
     // GLTF Transform Model Handling
-    this.documentIo = await io.read("../assets/web_asset_fbx2gltf_v2.glb");
-
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("../assets/draco/");
+    this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
 
     this.loadModelInScene(this.documentIo);
-
   }
 
   // Three.js related methods
   async loadModelInScene(documentIo: Document) {
+    const glbNonCompress = await this.io.writeBinary(documentIo);
+    console.log("without draco size: ", glbNonCompress.buffer.byteLength)
+
+    // comrpess with draco
+    documentIo.createExtension(KHRDracoMeshCompression)
+      .setRequired(true)
+      .setEncoderOptions({
+          method: KHRDracoMeshCompression.EncoderMethod.EDGEBREAKER,
+          encodeSpeed: 5,
+          decodeSpeed: 5,
+      });
     const glb = await this.io.writeBinary(documentIo);
+    console.log("with draco size: ", glb.buffer.byteLength)
+
     const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('./');
+    loader.setDRACOLoader(dracoLoader);
     loader.parse(glb.buffer, "", (gltf) => {
       let id: number;
       let model = gltf.scene;
@@ -157,10 +162,10 @@ export class ThreeComponent extends TailwindElement(style) {
 
     const draco = new DRACOModuleLoader();
     await draco.loadDracoDecoder();
-    // await draco.loadDracoEncoder();
-    console.log(draco.decoderModule)
+    await draco.loadDracoEncoder();
     this.dracoModules.decoder = draco.decoderModule;
-    // this.dracoModules.encoder = draco.encoderModule;
+    this.dracoModules.encoder = draco.encoderModule;
+    
     this.loadModel();
 
     // Initializing Orbit Controls for Model

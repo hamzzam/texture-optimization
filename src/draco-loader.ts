@@ -85,23 +85,19 @@ class DRACOModuleLoader {
 
     // Encoder
     loadWebAssemblyEncoder() {
-        return new Promise<void> ((resolve, reject) => {
+        return new Promise<void> (async (resolve, reject) => {
             this.dracoEncoderType['wasmBinaryFile'] = 'draco_encoder.wasm';
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', this.encoderPath + 'draco_encoder.wasm', true);
-            xhr.responseType = 'arraybuffer';
+            const decoderWasm = await (await fetch('./draco_encoder.wasm')).arrayBuffer();
+            console.log(decoderWasm)
+            
+            // For WebAssembly the object passed into DracoModule() must contain a
+            // property with the name of wasmBinary and the value must be an
+            // ArrayBuffer containing the contents of the .wasm file.
+            this.dracoEncoderType['wasmBinary'] = decoderWasm;
+            await this.createEncoderModule();
 
-            xhr.onload = async () => {
-                // For WebAssembly the object passed into DracoModule() must contain a
-                // property with the name of wasmBinary and the value must be an
-                // ArrayBuffer containing the contents of the .wasm file.
-                this.dracoEncoderType['wasmBinary'] = xhr.response;
-                await this.createEncoderModule();
-                resolve();
-            };
-
-            xhr.send(null)
+            resolve();
         });
     }
 
@@ -110,7 +106,7 @@ class DRACOModuleLoader {
             // draco_encoder.js or draco_wasm_wrapper.js must be loaded before
             // DracoModule is created.
             DracoEncoderModule(this.dracoEncoderType).then((module) => {
-                this.decoderModule = module;
+                this.encoderModule = module;
                 resolve();
             });
         });
@@ -129,7 +125,7 @@ class DRACOModuleLoader {
                     resolve();
                 }); 
             } else {
-                this.loadJavaScriptFile(this.decoderPath + 'draco_wasm_wrapper.js',  async () => {
+                this.loadJavaScriptFile(this.decoderPath + 'draco_encoder_wrapper.js',  async () => {
                     await this.loadWebAssemblyEncoder();
                     resolve();
                 });
