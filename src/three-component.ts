@@ -7,8 +7,10 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import style from "./header.component.scss";
 import { TailwindElement } from "../shared/tailwind.element";
 import { Document, WebIO, Material, Texture } from "@gltf-transform/core";
-import { KHRDracoMeshCompression } from "@gltf-transform/extensions";
+import { KHRDracoMeshCompression, KHRMaterialsClearcoat, KHRMaterialsTransmission } from "@gltf-transform/extensions";
 import { DRACOModuleLoader } from "./draco-loader";
+import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader';
+
 
 @customElement("three-component")
 export class ThreeComponent extends TailwindElement(style) {
@@ -50,13 +52,13 @@ export class ThreeComponent extends TailwindElement(style) {
   // general function and gltf-transform related methods
   async loadModel() {
     this.io = new WebIO()
-    .registerExtensions([KHRDracoMeshCompression])
+    .registerExtensions([KHRDracoMeshCompression, KHRMaterialsClearcoat, KHRMaterialsTransmission])
     .registerDependencies({
         'draco3d.decoder': this.dracoModules.decoder,
         'draco3d.encoder': this.dracoModules.encoder,
     });
     // GLTF Transform Model Handling
-    this.documentIo = await this.io.read("../assets/steampunk_glasses.glb");
+    this.documentIo = await this.io.read("../assets/Box_Draco.glb");
 
     this.loadModelInScene(this.documentIo);
   }
@@ -74,6 +76,26 @@ export class ThreeComponent extends TailwindElement(style) {
           encodeSpeed: 5,
           decodeSpeed: 5,
       });
+
+    const clearcoatExtension = documentIo.createExtension(KHRMaterialsClearcoat);
+    // Create Clearcoat property.
+    const clearcoat = clearcoatExtension.createClearcoat()
+    .setClearcoatFactor(1.0);
+
+    // Create an Extension attached to the Document.
+    const transmissionExtension = documentIo.createExtension(KHRMaterialsTransmission);
+
+    // Create a Transmission property.
+    const transmission = transmissionExtension.createTransmission()
+        .setTransmissionFactor(1.0);
+
+    const materials = documentIo.getRoot().listMaterials();
+    for (let index = 0; index < materials.length; index++) {
+      const element = materials[index];
+      console.log(element);
+      element.setExtension('KHR_materials_clearcoat', clearcoat);
+      element.setExtension('KHR_materials_transmission', transmission);
+    }
     const glb = await this.io.writeBinary(documentIo);
     console.log("with draco size: ", glb.buffer.byteLength)
 
@@ -137,7 +159,6 @@ export class ThreeComponent extends TailwindElement(style) {
 
   webglRender() {
     this.renderer!.render(this.scene, this.camera);
-    // console.log(this.decoderModule)
   }
 
   // Entry point
@@ -165,7 +186,7 @@ export class ThreeComponent extends TailwindElement(style) {
     await draco.loadDracoEncoder();
     this.dracoModules.decoder = draco.decoderModule;
     this.dracoModules.encoder = draco.encoderModule;
-    
+
     this.loadModel();
 
     // Initializing Orbit Controls for Model
@@ -187,10 +208,17 @@ export class ThreeComponent extends TailwindElement(style) {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
-    // this.renderer!.setSize(Number(width), Number(height));
-    // this.resizeCanvasToDisplaySize();
-
     this.renderer.setAnimationLoop(() => this.webglRender());
+
+    new HDRCubeTextureLoader()
+					.setPath( './pisaHDR/' )
+					.load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ],
+						( texture ) => {
+              console.log(texture)
+
+              this.scene.background = texture;
+							this.scene.environment = texture;
+            });
 
     window.addEventListener(
       "resize",
