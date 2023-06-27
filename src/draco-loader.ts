@@ -14,7 +14,7 @@ class DRACOModuleLoader {
     // It is recommended to always pull your Draco JavaScript and WASM decoders
     // from this URL. Users will benefit from having the Draco decoder in cache
     // as more sites start using the static URL.
-    decoderPath = './';
+    decoderPath = 'https://www.gstatic.com/draco/versioned/decoders/1.5.6/';
     encoderPath = './';
 
     constructor() {
@@ -120,12 +120,12 @@ class DRACOModuleLoader {
             if (typeof WebAssembly !== 'object') {
                 // No WebAssembly support. DracoModule must be called with no parameters
                 // or an empty object to create a JavaScript decoder.
-                this.loadJavaScriptFile(this.decoderPath + 'draco_encoder.js', async () => {
+                this.loadJavaScriptFile(this.encoderPath + 'draco_encoder.js', async () => {
                     await this.createEncoderModule();
                     resolve();
                 }); 
             } else {
-                this.loadJavaScriptFile(this.decoderPath + 'draco_encoder_wrapper.js',  async () => {
+                this.loadJavaScriptFile(this.encoderPath + 'draco_encoder_wrapper.js',  async () => {
                     await this.loadWebAssemblyEncoder();
                     resolve();
                 });
